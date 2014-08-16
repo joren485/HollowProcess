@@ -78,7 +78,7 @@ class CONTEXT(Structure):
                 ("EFlags", c_ulong),
                 ("Esp", c_ulong),
                 ("SegSs", c_ulong),
-                ("ExtendedRegisters", c_ubyte * 80)]
+                ("ExtendedRegisters", c_ubyte * 512)]
 
 def error():
         print "[!]Error: " + FormatError(GetLastError())
@@ -240,6 +240,10 @@ if windll.kernel32.WriteProcessMemory(
                                 c_int(4),
                                 byref(lpNumberOfBytesWritten)) == 0:
          error()
+
+print "\t[+]Pointer to data: " + str(hex(cx.Ebx+8))
+print "\t[+]Writing to: " + str(hex(payload_data_pointer+0x11C))
+print "\t[+]Size of data: " + str(hex(4))
 print "\t[+]Bytes written:", lpNumberOfBytesWritten.value
 
 print 
