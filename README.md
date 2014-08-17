@@ -10,7 +10,10 @@ The idea to create this came from the excellent book Practical malware analysis.
 Warning: This is not 100% stable and reliable. Although I have had a 100% success rate on svchost.exe with a 32 bit payload. 
 But on targets that are not part of windows I have had less luck.  
 
-Creates 0xC0000005 error (Access Violation)
+
+
+
+If the payload is an protected executable it will create 0xC0000005 error (Access Violation).
 
 
 Dependencies:
