@@ -21,7 +21,7 @@ Dependencies:
 
 Tests:
  - 32 bit payload into 32 bit target: WORKS
- - 32 bit payload into 64 bit target: WORKS
+ - 32 bit payload into 64 bit target: NOT TESTED
  - 64 bit payload into 32 bit target: NOT TESTED (I do not know if this is actually possible)
  - 64 bit payload into 64 bit target: NOT TESTED
 
