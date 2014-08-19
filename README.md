@@ -7,8 +7,7 @@ Hollow Process / Dynamic Forking / RunPE injection technique implemented in Pyth
 A simple implementation of the well known Process Hollowing technique used by malware.
 The idea to create this came from the excellent book Practical malware analysis.
 
-Warning: This is not 100% stable and reliable. Although I have had a 100% success rate on svchost.exe with a 32 bit payload. 
-But on targets that are not part of windows I have had less luck.  
+Warning: This is not 100% stable and reliable. Although I have had a 100% success rate on svchost.exe with a 32 bit payload.
 
 
 
