@@ -2,7 +2,7 @@ HollowProcess
 =============
 _Please note that this project is a **proof-of-concept**._
 
-Process hollowing (also known as RunPE) is a technique where a payload executable runs as another process. It is often used by malware to evade detection. 
+Process hollowing (also known as RunPE) is a technique where the memory of a target process is replaced with another (malicious) executable. It is often used by malware to evade detection. 
 
 This project implements this technique in Python 3.
 
