@@ -6,6 +6,9 @@ Process hollowing (also known as RunPE) is a technique where the memory of a tar
 
 This project implements this technique in Python 3.
 
+### Dependencies
+* [pefile](https://github.com/erocarrera/pefile)
+
 ### Testing
 I used a (64-bit) [Windows 10 vm](https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/) for testing.
 
